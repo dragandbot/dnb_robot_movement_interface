@@ -1,0 +1,6 @@
+# the command list message from the actionizer
+robot_movement_interface/CommandList input_commandlist
+---
+# the transformed pose will always be transformed to fixedFrame (/base)
+# coordinate system so it can directly be send to the actionizer
+robot_movement_interface/CommandList output_commandlist

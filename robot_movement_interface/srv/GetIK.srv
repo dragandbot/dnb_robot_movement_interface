@@ -1,0 +1,5 @@
+EulerFrame pose # Requested pose
+float32[] initial_joints # Joints in radians, empty if current pose used
+---
+float32[] joints # Joints in radians
+int32 error #0 if no error !0 if error, e.g. position not reachable

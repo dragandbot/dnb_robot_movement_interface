@@ -1,0 +1,5 @@
+IOID[] ios
+---
+AnalogIOValue[] ios
+bool success
+IOError[] errors

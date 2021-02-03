@@ -1,0 +1,4 @@
+float32[] joints # Joints in radians
+---
+EulerFrame pose
+int32 error #0 if no error !0 if error, e.g. joints outside limits

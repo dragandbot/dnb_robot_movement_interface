@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <node pkg="dnb_tf" type="tf_move_relative.py" name="tf_moverel" output="screen" />
+  <test test-name="autotest_dnb_tf" pkg="dnb_tf" type="autotest_dnb_tf.py" />
+
+</launch>
+
+

@@ -1,0 +1,9 @@
+# a pose
+float32[] input_pose
+# transformation
+robot_movement_interface/EulerFrame transform
+# invert the transformation
+bool invert
+---
+# the transformed pose will be in the transform_frame
+float32[] output_pose

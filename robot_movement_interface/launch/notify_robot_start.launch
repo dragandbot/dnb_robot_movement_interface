@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+	<node pkg="robot_movement_interface" type="notify_robot_start.py" name="notify_robot_start" output="screen"/>
+</launch>

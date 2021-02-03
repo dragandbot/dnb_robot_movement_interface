@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="docker" default="false"/>
+
+	<node pkg="robot_movement_interface" type="actionizer.py" name="commands_action_server" output="screen"/>
+
+	<!-- This node will transform commandlists from the dragandbot skills by
+	publishing and using an own frame in the transformation system -->
+	<node name="tf_moverel" pkg="dnb_tf" type="tf_move_relative.py" output="screen"/>
+</launch>

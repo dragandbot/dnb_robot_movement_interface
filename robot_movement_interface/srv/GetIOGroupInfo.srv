@@ -1,0 +1,4 @@
+string id
+---
+IOGroupInfo info
+int32 error
