@@ -2,7 +2,7 @@
 <package>
   
   <name>robot_movement_interface</name>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <description>Message definition of the Robot Movement Interface</description>
   <maintainer email="paq@ipa.fhg.de">Pablo Quilez Velilla</maintainer>
   <license>Apache 2</license>
