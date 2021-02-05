@@ -104,6 +104,9 @@ class DNBTF:
     def __init__(self):
         self.lock = threading.Lock()
         self.tf_listener = tf.TransformListener(True, rospy.Duration(10.0))
+        self.tr = tf.TransformerROS() # The ROS tranformer
+        # It is important that the transformer is defined only once,
+        # bacause each redefinition increases memory usage
 
         self.robot_fixed_frame = rospy.get_param(URI_FIXED_FRAME, "base_link")
         self.world_frame = rospy.get_param(URI_WORLD_FRAME, "world")
@@ -121,7 +124,7 @@ class DNBTF:
     # --------------------------------------------------------
     def listen_transformation(self, source_frame, target_frame):
         pos, rot = self.tf_listener.lookupTransform(target_frame, source_frame, self.tf_listener.getLatestCommonTime(target_frame, source_frame))
-
+        
         ef = EulerFrame()
         ef.x = pos[0]
         ef.y = pos[1]
@@ -160,16 +163,13 @@ class DNBTF:
             target = BASE_HELPER
             source = TARGET_HELPER
 
-        # the transformer
-        tr = tf.TransformerROS()
-
         # create the transformation frame in tr and publish it
-        self.publish_transformation(parent_pose, tr, timestamp)
+        self.publish_transformation(parent_pose, self.tr, timestamp)
 
         ps_input = dnb_euler_list_to_pose_stamped(child_pose, timestamp, target)
 
         # transform pose from input frame to base
-        ps_output = tr.transformPose(source, ps_input)
+        ps_output = self.tr.transformPose(source, ps_input)
 
         return pose_stamped_to_dnb_euler_list(ps_output)
 
