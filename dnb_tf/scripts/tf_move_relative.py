@@ -104,6 +104,7 @@ class DNBTF:
     def __init__(self):
         self.lock = threading.Lock()
         self.tf_listener = tf.TransformListener(True, rospy.Duration(10.0))
+        self.tr = tf.TransformerROS()
 
         self.robot_fixed_frame = rospy.get_param(URI_FIXED_FRAME, "base_link")
         self.world_frame = rospy.get_param(URI_WORLD_FRAME, "world")
@@ -160,16 +161,14 @@ class DNBTF:
             target = BASE_HELPER
             source = TARGET_HELPER
 
-        # the transformer
-        tr = tf.TransformerROS()
-
         # create the transformation frame in tr and publish it
-        self.publish_transformation(parent_pose, tr, timestamp)
+        self.tr.clear()
+        self.publish_transformation(parent_pose, self.tr, timestamp)
 
         ps_input = dnb_euler_list_to_pose_stamped(child_pose, timestamp, target)
 
         # transform pose from input frame to base
-        ps_output = tr.transformPose(source, ps_input)
+        ps_output = self.tr.transformPose(source, ps_input)        
 
         return pose_stamped_to_dnb_euler_list(ps_output)
 
@@ -216,7 +215,7 @@ class DNBTF:
                         robot_base_to_given_pose_reference = self.listen_transformation(self.robot_fixed_frame, req.input_commandlist.commands[i].pose_reference)
 
                     # step 2.2: "substract" the transformation from the robot base frame to the given frame from the given pose
-                    res.output_commandlist.commands[i].pose = self.transform(res.output_commandlist.commands[i].pose, robot_base_to_given_pose_reference, transformTime, True)
+                    res.output_commandlist.commands[i].pose = self.transform(res.output_commandlist.commands[i].pose, robot_base_to_given_pose_reference, transformTime, True)                    
                 except Exception as ex:
                         rospy.logerr("TFMoveRelative: Transformation error: " + str(ex))
                         return TransformResponse()
