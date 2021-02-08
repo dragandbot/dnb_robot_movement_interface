@@ -163,6 +163,8 @@ class DNBTF:
             target = BASE_HELPER
             source = TARGET_HELPER
 
+        self.tr.clear() # Important for avoiding noetic for TF_REPEATED_DATA error
+
         # create the transformation frame in tr and publish it
         self.publish_transformation(parent_pose, self.tr, timestamp)
 
