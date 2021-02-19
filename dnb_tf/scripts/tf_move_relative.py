@@ -168,7 +168,7 @@ class DNBTF:
         ps_input = dnb_euler_list_to_pose_stamped(child_pose, timestamp, target)
 
         # transform pose from input frame to base
-        ps_output = self.tr.transformPose(source, ps_input)        
+        ps_output = self.tr.transformPose(source, ps_input)
 
         return pose_stamped_to_dnb_euler_list(ps_output)
 
