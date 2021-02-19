@@ -215,7 +215,7 @@ class DNBTF:
                         robot_base_to_given_pose_reference = self.listen_transformation(self.robot_fixed_frame, req.input_commandlist.commands[i].pose_reference)
 
                     # step 2.2: "substract" the transformation from the robot base frame to the given frame from the given pose
-                    res.output_commandlist.commands[i].pose = self.transform(res.output_commandlist.commands[i].pose, robot_base_to_given_pose_reference, transformTime, True)                    
+                    res.output_commandlist.commands[i].pose = self.transform(res.output_commandlist.commands[i].pose, robot_base_to_given_pose_reference, transformTime, True)
                 except Exception as ex:
                         rospy.logerr("TFMoveRelative: Transformation error: " + str(ex))
                         return TransformResponse()
