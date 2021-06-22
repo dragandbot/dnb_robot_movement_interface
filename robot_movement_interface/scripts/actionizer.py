@@ -9,6 +9,7 @@ import actionlib
 from dnb_tf.srv import *
 from dnb_tool_manager.srv import TransformGoal
 from robot_movement_interface.msg import *
+from dnb_ros_moveit.srv import COMPUTEPathPlan
 
 # Information: a result code != 0 means abnormal trajectory 
 # Information: a result code == -1 means that an error was produced in the trajectory, and therefore will finish
@@ -67,6 +68,7 @@ class Actionizer(object):
 		self._transformService = rospy.ServiceProxy(transformServiceName, Transform)
 		self._toolManagerService = rospy.ServiceProxy(toolManagerServiceName, TransformGoal)
 		self._as.start() # Start the action
+		self._moveitPTPService = rospy.ServiceProxy("dnb/ptp_moveit", COMPUTEPathPlan)
 
 	# Action callback
 	def execute_cb(self, goal):
@@ -129,6 +131,20 @@ class Actionizer(object):
 			rospy.logerr("Error transforming Tool Center Point. Empty list of positions.")
 			self._as.set_aborted(self._result) # Aborted proxy
 			return
+
+		#Moveit service integrations
+		if goal.commands.commands[0].additional_parameters and goal.commands.commands[0].additional_parameters[0] == "Moveit":
+			goal_moveit = self._moveitPTPService(command_id, goal.commands)
+			if goal_moveit.success:
+				goal.commands.commands.pop(0)
+				for commands in goal_moveit.motion_plan_response.commands: goal.commands.commands.append(commands)
+
+				goal_id = goal.commands.commands[-1].command_id
+				goal_moveit = False
+			else:
+				rospy.logerr("Faild to compute path (Collision or IK-Solve not possible)")
+				self._as.set_aborted(self._result) # Aborted proxy
+				return
 
 		# publish the goal to the command_list topic
 		self.publisher.publish(goal.commands)
