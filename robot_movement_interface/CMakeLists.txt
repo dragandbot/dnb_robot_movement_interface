@@ -31,6 +31,7 @@ add_service_files(
   GetFloat.srv
   GetFloatList.srv
   SetString.srv
+  SetInt32.srv
 
 # old io system
   GetIO.srv
