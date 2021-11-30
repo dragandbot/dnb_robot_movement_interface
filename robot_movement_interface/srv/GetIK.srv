@@ -1,4 +1,7 @@
 EulerFrame pose # Requested pose
+bool pose_robot_based # true: the pose is in robot coordinate system and ik will be applied directly; false: the pose is in world coordinate system will be recalculated to world before applying ik
+bool pose_flange_based # true: the pose is flange coordinates and ik will be applied directly; false: the pose is tool coordinates and will be recalculated to flange before applying ik
+
 float32[] initial_joints # Joints in radians, empty if current pose used
 ---
 float32[] joints # Joints in radians
