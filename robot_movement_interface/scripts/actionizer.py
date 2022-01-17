@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 import time
 import rospy
-import thread
+import _thread
 import threading
 import actionlib
 

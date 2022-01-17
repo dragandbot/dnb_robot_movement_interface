@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 import rospy
 import tf2_ros
 import PyKDL as kdl

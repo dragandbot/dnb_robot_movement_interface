@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+#!/usr/bin/python3
 
 #TOOD: incremental_joints to be added and tested in the future as currently its not working
 
@@ -556,9 +555,9 @@ if __name__ == '__main__':
 	rospy.init_node('dnb_tf_autotest')
 	try :
 		rostest.rosrun(PKG, NAME, UnitTest, sys.argv) 
-	except	KeyboardInterrupt, e :
+	except	KeyboardInterrupt as e :
 		rospy.logger (e)
 		pass
 
-	print "exiting"
+	print("exiting")
 
