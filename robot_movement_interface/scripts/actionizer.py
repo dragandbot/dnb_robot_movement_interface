@@ -9,6 +9,8 @@ import actionlib
 from dnb_tf.srv import *
 from dnb_tool_manager.srv import TransformGoal
 from robot_movement_interface.msg import *
+from std_srvs.srv import *
+from dnb_collision_detection.srv import *
 
 # Information: a result code != 0 means abnormal trajectory 
 # Information: a result code == -1 means that an error was produced in the trajectory, and therefore will finish
@@ -50,6 +52,10 @@ class Actionizer(object):
 		self.publisher = rospy.Publisher('/command_list', CommandList, queue_size=10)
 		self._action_name = name
 		self._as = actionlib.SimpleActionServer(self._action_name, CommandsAction, execute_cb=self.execute_cb, auto_start = False)
+		self._srv_set_collision_checking = rospy.Service('~set_collision_checking', SetBool, self.cb_set_collision_checking)
+		self._srv_set_move_despite_collision = rospy.Service('~set_move_despite_collision', SetBool, self.cb_set_move_despite_collision)
+		self._collision_checking = False
+		self._move_despite_collision = False
 
 		rospy.loginfo("Starting actionizer")
 
@@ -67,6 +73,37 @@ class Actionizer(object):
 		self._transformService = rospy.ServiceProxy(transformServiceName, Transform)
 		self._toolManagerService = rospy.ServiceProxy(toolManagerServiceName, TransformGoal)
 		self._as.start() # Start the action
+
+	def cb_set_collision_checking(self, req):
+		self._collision_checking = req.data
+		return SetBoolResponse(success = True)
+
+	def cb_set_move_despite_collision(self, req):
+		self._move_despite_collision = req.data
+		return SetBoolResponse(success = True)
+
+	def cb_set_need_ik_when_collision_checking(self, req):
+		self._need_ik_when_collision_checking = req.data
+		return SetBoolResponse(success = True)
+
+	def check_for_collision(self, commands): # returns service_success, ik_success, have_collision
+		try:
+			rospy.wait_for_service('/dnb_check_trajectory_collision/check_waypoints', 1.0)
+			srv_check_waypoints = rospy.ServiceProxy('/dnb_check_trajectory_collision/check_waypoints', CheckWaypoints)
+
+			request = CheckWaypointsRequest()
+			request.commands = commands
+
+			result = srv_check_waypoints(request)
+
+			if result.result_code == CheckWaypointsResponse.SUCCESS:
+				return True, True, len(result.collisions.collisions)>0
+			elif result.result_code == CheckWaypointsResponse.ERROR_IK_FAILED:
+				return True, False, False
+			else:
+				return False, False, False
+		except (rospy.ServiceException, rospy.ROSException):
+			return False, False, False
 
 	# Action callback
 	def execute_cb(self, goal):
@@ -130,36 +167,64 @@ class Actionizer(object):
 			self._as.set_aborted(self._result) # Aborted proxy
 			return
 
-		# publish the goal to the command_list topic
-		self.publisher.publish(goal.commands)
+		if self._collision_checking:
+			service_success, ik_success, have_collision = self.check_for_collision(goal.commands)
+		else:
+			service_success = True
+			ik_success = True
+			have_collision = False
 
-		# loop until last goal was reached or
-		# cancelation of the commands was requested
-		rospy.logdebug("Waiting for last_result message...")
-		while True:
+		if self._collision_checking and not service_success:
+			rospy.loginfo("Command list aborted (collision checking failure).")
+			last_finished_id = None
+			self._result.result.result_code = Result.FAILURE_COLLISION_CHECKING
+			self._as.set_preempted(self._result)
+			return
 
-			with lock:
-				if self._as.is_preempt_requested():
-					rospy.loginfo("Command list aborted (preempted).")
-					last_finished_id = None
-					if last_msg: self._result.result = last_msg
-					self._result.result.result_code = Result.FAILURE_EXECUTION
-					self._as.set_preempted(self._result)
-					return
-				elif last_msg and last_msg.result_code != Result.SUCCESS:
-					rospy.loginfo("Command list aborted (error executing trajectory).")
-					last_finished_id = None
-					if last_msg: self._result.result = last_msg
-					self._result.result.result_code = last_msg.result_code
-					self._as.set_aborted(self._result)
-					return
-				elif goal_id == last_finished_id:
-					rospy.logdebug("Last trajectory command reached.")
-					if last_msg: self._result.result = last_msg
-					self._as.set_succeeded(self._result)
-					return
+		if self._collision_checking and not ik_success:
+			rospy.loginfo("Command list aborted (ik failure).")
+			last_finished_id = None
+			self._result.result.result_code = Result.FAILURE_IK
+			self._as.set_preempted(self._result)
+			return
 
-			rospy.sleep(0.05)
+		if (not have_collision or (have_collision and self._move_despite_collision)):
+			# publish the goal to the command_list topic
+			self.publisher.publish(goal.commands)
+
+			# loop until last goal was reached or
+			# cancelation of the commands was requested
+			rospy.logdebug("Waiting for last_result message...")
+			while True:
+
+				with lock:
+					if self._as.is_preempt_requested():
+						rospy.loginfo("Command list aborted (preempted).")
+						last_finished_id = None
+						if last_msg: self._result.result = last_msg
+						self._result.result.result_code = Result.FAILURE_EXECUTION
+						self._as.set_preempted(self._result)
+						return
+					elif last_msg and last_msg.result_code != Result.SUCCESS:
+						rospy.loginfo("Command list aborted (error executing trajectory).")
+						last_finished_id = None
+						if last_msg: self._result.result = last_msg
+						self._result.result.result_code = last_msg.result_code
+						self._as.set_aborted(self._result)
+						return
+					elif goal_id == last_finished_id:
+						rospy.logdebug("Last trajectory command reached.")
+						if last_msg: self._result.result = last_msg
+						self._as.set_succeeded(self._result)
+						return
+
+				rospy.sleep(0.05)
+		else:
+			rospy.loginfo("Command list aborted (possible collision).")
+			last_finished_id = None
+			self._result.result.result_code = Result.FAILURE_POSSIBLE_COLLISION
+			self._as.set_preempted(self._result)
+			return
 
 
 if __name__ == '__main__':
