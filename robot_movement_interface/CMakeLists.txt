@@ -22,6 +22,9 @@ add_message_files(
   DigitalIOValue.msg
   AnalogIOValue.msg
   IOGroupInfo.msg
+
+# KEBA PLC 
+  IECVariable.msg
 )
 
 add_service_files(
