@@ -1,0 +1,7 @@
+int32 error_code_number
+---
+ErrorCodeInformation error_code_information
+
+int32 result_code
+int32 SUCCESS = 0
+int32 NOT_FOUND = 1
