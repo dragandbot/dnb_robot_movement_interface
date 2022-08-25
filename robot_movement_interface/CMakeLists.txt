@@ -9,6 +9,7 @@ add_message_files(
   Command.msg
   CommandList.msg
   EulerFrame.msg
+  ErrorCodeInformation.msg
 
 # old io system
   IOState.msg
@@ -35,6 +36,7 @@ add_service_files(
   GetFloatList.srv
   SetString.srv
   GetString.srv
+  GetErrorCodeInformation.srv
 
 # old io system
   GetIO.srv
