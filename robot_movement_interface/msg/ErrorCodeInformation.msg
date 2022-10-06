@@ -1,3 +1,3 @@
-int32 code_number
+string code
 string classification
 string description

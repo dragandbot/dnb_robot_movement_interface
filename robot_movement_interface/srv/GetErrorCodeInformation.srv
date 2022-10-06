@@ -1,4 +1,4 @@
-int32 error_code_number
+string error_code
 ---
 ErrorCodeInformation error_code_information
 
