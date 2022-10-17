@@ -8,9 +8,11 @@ import actionlib
 
 from dnb_tf.srv import *
 from dnb_tool_manager.srv import TransformGoal
-from robot_movement_interface.msg import *
+from robot_movement_interface.msg import * 	# Get FK
+from robot_movement_interface.srv import *
 from std_srvs.srv import *
-from dnb_collision_detection.srv import *
+from dnb_collision_detection.srv import *	# CheckWaypoints
+from dnb_virtual_walls.srv import *			# CheckWalls
 
 # Information: a result code != 0 means abnormal trajectory 
 # Information: a result code == -1 means that an error was produced in the trajectory, and therefore will finish
@@ -53,8 +55,12 @@ class Actionizer(object):
 		self._action_name = name
 		self._as = actionlib.SimpleActionServer(self._action_name, CommandsAction, execute_cb=self.execute_cb, auto_start = False)
 		self._srv_set_collision_checking = rospy.Service('~set_collision_checking', SetBool, self.cb_set_collision_checking)
+		self._srv_set_virtual_walls = rospy.Service('~set_virtual_walls', SetBool, self.cb_set_virtual_walls)
 		self._srv_set_move_despite_collision = rospy.Service('~set_move_despite_collision', SetBool, self.cb_set_move_despite_collision)
 		self._collision_checking = False
+		self._virtual_walls = False
+		self._virtual_walls_service_proxy = None
+		self._fk_service_proxy = None
 		self._move_despite_collision = False
 
 		rospy.loginfo("Starting actionizer")
@@ -77,6 +83,26 @@ class Actionizer(object):
 	def cb_set_collision_checking(self, req):
 		self._collision_checking = req.data
 		return SetBoolResponse(success = True)
+
+	def cb_set_virtual_walls(self, req):
+		#rospy.logerr("Actionizer: walls set to " + str(req.data))
+		if req.data:
+			try:
+				rospy.wait_for_service('/get_fk', 3.0)
+				rospy.wait_for_service('/dnb_virtual_walls/check_walls', 3.0)
+				self._fk_service_proxy = rospy.ServiceProxy('get_fk', GetFK)
+				self._virtual_walls_service_proxy = rospy.ServiceProxy('/dnb_virtual_walls/check_walls', CheckWalls)
+				self._virtual_walls = True
+			except Exception as e:
+				rospy.logerr("Actionizer: walls check cannot be activated due to " + str(e))
+				self._virtual_walls = False
+				self._virtual_walls_service_proxy = None
+				self._fk_service_proxy = None
+		else:
+			self._virtual_walls = False
+			self._virtual_walls_service_proxy = None
+			self._fk_service_proxy = None
+		return SetBoolResponse(success = self._virtual_walls)
 
 	def cb_set_move_despite_collision(self, req):
 		self._move_despite_collision = req.data
@@ -104,6 +130,45 @@ class Actionizer(object):
 				return False, False, False
 		except (rospy.ServiceException, rospy.ROSException):
 			return False, False, False
+
+	# Given a list of joints returns its euler pose by calling the fk service
+	# PRE: FK Service must exist and should be checked before, assert walls checking active
+	def get_euler_from_joints(self, joints):
+		assert(self._virtual_walls and self._virtual_walls_service_proxy and self._fk_service_proxy)
+		fk_request = GetFKRequest()
+		fk_request.joints = joints
+		fk_request.result_robot_based = True
+		fk_request.result_flange_based = True
+		fk_response = self._fk_service_proxy(fk_request)
+		p = fk_response.pose
+		assert(fk_response.error == 0)
+		return [p.x, p.y, p.z, p.alpha, p.beta, p.gamma]
+
+	# Returns success = true if command crashes with no wall. If das system is deactivated, returns always success
+	def check_for_walls(self, commands):
+		if self._virtual_walls:
+			for command in commands.commands:
+				if command.command_type == "LIN" or command.command_type == "PTP":
+					if command.pose_type == "JOINTS":
+						target_pose = self.get_euler_from_joints(command.pose)
+					elif command.pose_type == "EULER_INTRINSIC_ZYX":
+						target_pose = command.pose
+					else:
+						rospy.logerr("Actionizer: Unidentified pose type, cannot check for walls")
+						return False
+					wall_request = CheckWallsRequest()
+					wall_request.flange.x = target_pose[0]
+					wall_request.flange.y = target_pose[1]
+					wall_request.flange.z = target_pose[2]
+					wall_request.flange.alpha = target_pose[3]
+					wall_request.flange.beta = target_pose[4]
+					wall_request.flange.gamma = target_pose[5]
+					wall_response = self._virtual_walls_service_proxy(wall_request)
+					if wall_response.crash: return False
+				else:
+					rospy.logerr("Actionizer: Walls accepts only LIN or PTP moves. Cancelling")
+					return False
+		return True	
 
 	# Action callback
 	def execute_cb(self, goal):
@@ -173,6 +238,14 @@ class Actionizer(object):
 			service_success = True
 			ik_success = True
 			have_collision = False
+
+		if self._virtual_walls:
+			if not self.check_for_walls(goal.commands):
+				rospy.loginfo("Command list aborted (wall crash).")
+				last_finished_id = None
+				self._result.result.result_code = Result.FAILURE_COLLISION_CHECKING
+				self._as.set_preempted(self._result)
+				return
 
 		if self._collision_checking and not service_success:
 			rospy.loginfo("Command list aborted (collision checking failure).")
