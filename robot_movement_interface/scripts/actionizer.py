@@ -176,6 +176,8 @@ class Actionizer(object):
 		global last_msg
 		global last_finished_id
 
+		rospy.loginfo("<ActionizerInformed> <> <>")
+
 		# last finished id and msg must come after the new command is sent.
 		last_finished_id = None
 		last_msg = None
@@ -263,6 +265,7 @@ class Actionizer(object):
 
 		if (not have_collision or (have_collision and self._move_despite_collision)):
 			# publish the goal to the command_list topic
+			rospy.loginfo("<ActionizerFinished> <> <>")
 			self.publisher.publish(goal.commands)
 
 			# loop until last goal was reached or
