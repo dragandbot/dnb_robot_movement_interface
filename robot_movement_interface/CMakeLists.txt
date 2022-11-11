@@ -26,6 +26,7 @@ add_message_files(
 
 # KEBA PLC 
   IECVariable.msg
+  IECVariableList.msg
 )
 
 add_service_files(
