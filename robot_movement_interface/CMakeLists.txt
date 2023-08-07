@@ -48,11 +48,14 @@ add_service_files(
   SetDigitalIOs.srv
   GetAnalogIOs.srv
   SetAnalogIOs.srv
+  GetCategoryIOs.srv
   GetIOGroupInfo.srv
   GetAllIOGroupInfos.srv
   GetIOInfo.srv
+  GetIOCategories.srv
   SetIODisplayTitle.srv
   SetIOSimulated.srv
+  SetIOCategories.srv
 
 # FK and IK
   GetFK.srv

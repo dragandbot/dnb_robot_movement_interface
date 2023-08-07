@@ -1,0 +1,4 @@
+IOID id
+string[] categories
+---
+int32 error
