@@ -23,6 +23,7 @@ add_message_files(
   DigitalIOValue.msg
   AnalogIOValue.msg
   IOGroupInfo.msg
+  IOChanges.msg
 
 # KEBA PLC 
   IECVariable.msg
