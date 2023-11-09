@@ -6,7 +6,7 @@ from std_msgs.msg import Empty
 # service is setup
 def robot_start_notify():
     rospy.init_node('notify_robot_start')
-    publisher_notify_changed_transforms = rospy.Publisher('/notify_changed_system_transformations', Empty, queue_size=1)
+    publisher_notify_changed_transforms = rospy.Publisher('/notification/system_frame_change/external_trigger', Empty, queue_size=1)
     delay = rospy.Duration(rospy.get_param('~delay', 1.0))
 
     rospy.sleep(delay)
