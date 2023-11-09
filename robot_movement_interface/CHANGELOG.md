@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Changed published topic to "/notification/system_frame_change/external_trigger" in notify_robot_start.py
 - Changed release version management
 
 ***
