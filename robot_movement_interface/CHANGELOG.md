@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added IOChanges message type
 - Added timestamp to IOInfo and DigitalIOValue message files
+- Added simulated_editable to IOInfo message file
 - Added result code FAILURE_STOP_TRIGGERED to Result.msg
 
 ## [1.3.0] - 2023-10-25
