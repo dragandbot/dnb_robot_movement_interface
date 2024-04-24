@@ -1,0 +1,8 @@
+Joints[] joints # joints in radians/meters
+
+bool result_robot_based # true: returns the result in robot coordinate system; false: returns the result in world coordinate system
+bool result_flange_based # true: returns the result as flange coordinates; false: returns the result as tool coordinates
+---
+# array size of poses and error will always be the same
+EulerFrame[] poses
+int32[] error #0 if no error !0 if error, e.g. joints outside limits

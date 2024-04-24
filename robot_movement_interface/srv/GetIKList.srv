@@ -1,0 +1,13 @@
+EulerFrame[] poses # Requested poses
+bool pose_robot_based # true: the pose is in robot coordinate system and ik will be applied directly; false: the pose is in world coordinate system will be recalculated to robot coordinates before applying ik
+bool pose_flange_based # true: the pose is flange coordinates and ik will be applied directly; false: the pose is tool coordinates and will be recalculated to flange coordinates before applying ik
+
+Joints initial_joints # initial Joints for the first pose in radians/meters, empty if current pose used; other than the first pose use the previously calculated joints
+---
+# array size of joints and error will always be the same
+Joints[] joints # Joints in radians/meters
+
+# error: 0 on SUCCESS
+#        1 when initial_joints size != joints size of the robot
+#        2 when NO solution was found for IK
+int32[] error

@@ -10,6 +10,7 @@ add_message_files(
   CommandList.msg
   EulerFrame.msg
   ErrorCodeInformation.msg
+  Joints.msg
 
 # old io system
   IOState.msg
@@ -61,6 +62,8 @@ add_service_files(
 # FK and IK
   GetFK.srv
   GetIK.srv
+  GetFKList.srv
+  GetIKList.srv
 )
 
 add_action_files(
