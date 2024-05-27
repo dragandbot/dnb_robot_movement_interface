@@ -3,6 +3,8 @@ bool pose_robot_based # true: the pose is in robot coordinate system and ik will
 bool pose_flange_based # true: the pose is flange coordinates and ik will be applied directly; false: the pose is tool coordinates and will be recalculated to flange coordinates before applying ik
 
 Joints initial_joints # initial Joints for the first pose in radians/meters, empty if current pose used; other than the first pose use the previously calculated joints
+
+float32 tolerance # if > 0: tolerance to overwrite the default tolerance of the ik solver
 ---
 # array size of joints and error will always be the same
 Joints[] joints # Joints in radians/meters
